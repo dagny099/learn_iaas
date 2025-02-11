@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        cd lambda
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+
+    - name: Run tests
+      run: |
+        cd lambda
+        python -m pytest -v --cov=src --cov-report=xml
+
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./lambda/coverage.xml
+        fail_ci_if_error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        cd lambda
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+
+    - name: Run black
+      run: |
+        cd lambda
+        black --check src tests
+
+    - name: Run flake8
+      run: |
+        cd lambda
+        flake8 src tests
+
+    - name: Run mypy
+      run: |
+        cd lambda
+        mypy src tests
